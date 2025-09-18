@@ -1,0 +1,11 @@
+{
+  "name": "Follow Checker",
+  "description": "Check who follows you, who doesn’t, and your mutual connections on Farcaster.",
+  "iconUrl": "https://follow-checker.vercel.app/icon.png",
+  "imageUrl": "https://follow-checker.vercel.app/image.png",
+  "splashImageUrl": "https://follow-checker.vercel.app/splash.png",
+  "splashBackgroundColor": "#6200EA",
+  "website": "https://follow-checker.vercel.app",
+  "appUrl": "https://follow-checker.vercel.app",
+  "redirects": ["https://follow-checker.vercel.app"]
+}
