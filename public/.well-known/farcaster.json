@@ -1,20 +1,11 @@
 {
-  "frame": {
-    "name": "Follow Checker",
-    "version": "1",
-    "iconUrl": "https://follow-checker.vercel.app/icon.png",
-    "homeUrl": "https://follow-checker.vercel.app/",
-    "splashImageUrl": "https://follow-checker.vercel.app/splash.png",
-    "splashBackgroundColor": "#6200EA",
-    "description": "Check who follows you, who doesn’t, and your mutual connections on Farcaster.",
-    "subtitle": "Track your Farcaster followers instantly",
-    "primaryCategory": "social",
-    "tags": [
-      "farcaster"
-    ],
-    "ogTitle": "Farcaster Follow Checker",
-    "ogDescription": "Check who follows you, who doesn’t, and your mutuals on Farcaster.",
-    "tagline": "Track Farcaster followers",
-    "ogImageUrl": "https://follow-checker.vercel.app/image.png"
-  }
+  "name": "Follow Checker",
+  "description": "Check who follows you, who doesn’t, and your mutual connections on Farcaster.",
+  "iconUrl": "https://follow-checker.vercel.app/icon.png",
+  "imageUrl": "https://follow-checker.vercel.app/image.png",
+  "splashImageUrl": "https://follow-checker.vercel.app/splash.png",
+  "splashBackgroundColor": "#6200EA",
+  "website": "https://follow-checker.vercel.app",
+  "appUrl": "https://follow-checker.vercel.app",
+  "redirects": ["https://follow-checker.vercel.app"]
 }
