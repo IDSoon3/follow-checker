@@ -1,6 +1,5 @@
 // pages/api/followers.js
 export default async function handler(req, res) {
-  const apiKey = process.env.API_KEY; // API Key dari Vercel/GitHub Environment
   const { username } = req.query;
 
   if (!username) {
@@ -8,37 +7,36 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 🔹 Step 1: Ambil user info dari username
-    const userRes = await fetch(`https://api.farcaster.xyz/v1/users?username=${username}`, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    });
+    const apiKey = process.env.API_KEY || "98606444-A94B-4C65-8C05-593F48DB94B5";
 
+    // 1. Ambil FID dari username
+    const userRes = await fetch(
+      `https://api.warpcast.com/v2/user-by-username?username=${username}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
     const userData = await userRes.json();
 
-    if (!userRes.ok || !userData.users || userData.users.length === 0) {
-      return res.status(404).json({ error: "User tidak ditemukan" });
+    if (!userRes.ok || !userData.result?.user) {
+      return res.status(404).json({ error: "User tidak ditemukan", raw: userData });
     }
 
-    const fid = userData.users[0].fid; // ambil FID user
+    const fid = userData.result.user.fid;
 
-    // 🔹 Step 2: Ambil followers user berdasarkan FID
-    const followersRes = await fetch(`https://api.farcaster.xyz/v1/user-followers?fid=${fid}`, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    });
-
+    // 2. Ambil followers (endpoint baru)
+    const followersRes = await fetch(
+      `https://api.warpcast.com/v2/followers?fid=${fid}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
     const followersData = await followersRes.json();
 
     if (!followersRes.ok) {
-      return res.status(500).json({ error: "Gagal mengambil followers", detail: followersData });
+      return res
+        .status(followersRes.status)
+        .json({ error: followersData.message || "Gagal ambil followers", raw: followersData });
     }
 
-    return res.status(200).json(followersData);
-  } catch (error) {
-    console.error("Error followers:", error.message);
-    return res.status(500).json({ error: "Gagal mengambil data followers" });
+    return res.status(200).json({ users: followersData.result.users });
+  } catch (err) {
+    return res.status(500).json({ error: "Server error", detail: err.message });
   }
 }
