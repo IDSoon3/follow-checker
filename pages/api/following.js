@@ -1,21 +1,35 @@
-// pages/api/following.js
 import axios from "axios";
 
 export default async function handler(req, res) {
   const { username } = req.query;
-  const apiKey = process.env.API_KEY;
-
+  const apiKey = "98606444-A94B-4C65-8C05-593F48DB94B5"; // API Key kamu
 
   if (!username) {
     return res.status(400).json({ error: "Username diperlukan" });
   }
 
   try {
-    // Contoh: ambil data dari API Farcaster / Twitter dsb
-    const response = await axios.get(`https://api.example.com/${username}/following`);
+    // 1. Cari user by username dulu
+    const userRes = await axios.get(
+      `https://api.neynar.com/v2/farcaster/user/by-username?username=${username}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
 
-    res.status(200).json(response.data);
+    const fid = userRes.data.result.user.fid;
+
+    // 2. Ambil daftar following
+    const followingRes = await axios.get(
+      `https://api.neynar.com/v2/farcaster/user/following?fid=${fid}`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
+
+    const following = followingRes.data.users.map(u => ({
+      username: u.username
+    }));
+
+    res.status(200).json(following);
   } catch (error) {
-    res.status(500).json({ error: "Gagal mengambil data" });
+    console.error("Error following:", error.response?.data || error.message);
+    res.status(500).json({ error: "Gagal mengambil data following" });
   }
 }

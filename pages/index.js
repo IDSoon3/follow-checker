@@ -2,55 +2,57 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [username, setUsername] = useState("idsoon"); // default isi farcaster kamu
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [notFollowBack, setNotFollowBack] = useState([]);
+  const [youDontFollowBack, setYouDontFollowBack] = useState([]);
 
-  const fetchData = async (type) => {
-    if (!username) {
-      setError("Masukkan username dulu!");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    setData([]);
-
+  const checkFollow = async () => {
     try {
-      const res = await axios.get(`/api/${type}?username=${username}`);
-      setData(res.data);
-    } catch (err) {
-      setError("Gagal mengambil data.");
-    } finally {
-      setLoading(false);
+      const followersRes = await axios.get(`/api/followers?username=${username}`);
+      const followingRes = await axios.get(`/api/following?username=${username}`);
+
+      const followersList = followersRes.data.map(f => f.username);
+      const followingList = followingRes.data.map(f => f.username);
+
+      setFollowers(followersList);
+      setFollowing(followingList);
+
+      // orang yang kamu follow tapi ga follow balik
+      const notFollowBackList = followingList.filter(u => !followersList.includes(u));
+      setNotFollowBack(notFollowBackList);
+
+      // orang yang follow kamu tapi ga kamu follow balik
+      const youDontFollowBackList = followersList.filter(u => !followingList.includes(u));
+      setYouDontFollowBack(youDontFollowBackList);
+
+    } catch (error) {
+      console.error(error);
+      alert("Gagal mengambil data.");
     }
   };
 
   return (
-    <div style={{ padding: "2rem", fontFamily: "Arial" }}>
+    <div style={{ padding: "2rem" }}>
       <h1>Follow Back Checker</h1>
-
       <input
         type="text"
-        placeholder="Masukkan username..."
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        style={{ padding: "8px", marginRight: "8px" }}
+        onChange={e => setUsername(e.target.value)}
+        placeholder="Masukkan username"
+        style={{ marginRight: "1rem" }}
       />
+      <button onClick={checkFollow}>Cek</button>
 
-      <button onClick={() => fetchData("following")} style={{ marginRight: "8px" }}>
-        Cek Following
-      </button>
-      <button onClick={() => fetchData("followers")}>Cek Followers</button>
-
-      {loading && <p>Sedang mengambil data...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
+      <h2>Yang kamu follow tapi tidak follow balik:</h2>
       <ul>
-        {Array.isArray(data) &&
-          data.map((item, i) => (
-            <li key={i}>{item.username || JSON.stringify(item)}</li>
-          ))}
+        {notFollowBack.map(u => <li key={u}>{u}</li>)}
+      </ul>
+
+      <h2>Yang follow kamu tapi tidak kamu follow balik:</h2>
+      <ul>
+        {youDontFollowBack.map(u => <li key={u}>{u}</li>)}
       </ul>
     </div>
   );
