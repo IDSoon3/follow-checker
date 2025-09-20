@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Head from "next/head";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -9,6 +10,24 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+
+  // Signal Mini App readiness and fetch user automatically
+  useEffect(() => {
+    sdk.actions.ready();
+
+    async function fetchUser() {
+      try {
+        const res = await sdk.actions.signIn(); // Farcaster login
+        if (res && res.username) {
+          setUsername(res.username);
+        }
+      } catch (err) {
+        console.error("Farcaster login failed:", err);
+      }
+    }
+
+    fetchUser();
+  }, []);
 
   const fetchData = async () => {
     if (!username) return;
@@ -28,7 +47,9 @@ export default function Home() {
         setFollowers(followersData.users || []);
         setFollowing(followingData.users || []);
       } else {
-        setError(followersData.error || followingData.error || "Failed to fetch data");
+        setError(
+          followersData.error || followingData.error || "Failed to fetch data"
+        );
       }
     } catch (err) {
       setError("Server error occurred");
@@ -58,15 +79,38 @@ export default function Home() {
     >
       <Head>
         <title>Farcaster Follow Checker</title>
-        <meta name="description" content="Check who unfollowed or mutuals on Farcaster" />
+        <meta
+          name="description"
+          content="Check who doesn’t follow back or who is mutual on Farcaster"
+        />
         <meta property="og:title" content="Farcaster Follow Checker" />
-        <meta property="og:description" content="Check who unfollowed or mutuals on Farcaster" />
+        <meta
+          property="og:description"
+          content="Check who doesn’t follow back or who is mutual on Farcaster"
+        />
         <meta property="og:image" content="/preview.png" />
+        <meta name="fc:frame" content="vNext" />
+        <meta name="fc:frame:image" content="/preview.png" />
+        <meta name="fc:frame:button:1" content="Check Now" />
+        <meta name="fc:frame:post_url" content="/api/check" />
       </Head>
 
       <main style={{ maxWidth: 720, margin: "0 auto", padding: 20 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
-          <h1 style={{ fontSize: 28, fontWeight: "bold", color: "#7c3aed" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 28,
+              fontWeight: "bold",
+              color: "#7c3aed",
+            }}
+          >
             Farcaster Follow Checker
           </h1>
           <button
@@ -78,6 +122,8 @@ export default function Home() {
               borderRadius: 8,
               border: "none",
               cursor: "pointer",
+              fontSize: 14,
+              fontWeight: "600",
             }}
           >
             {darkMode ? "☀️ Light" : "🌙 Dark"}
@@ -115,7 +161,7 @@ export default function Home() {
           </button>
         </div>
 
-        {loading && <p>Loading...</p>}
+        {loading && <p>Loading data...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -140,10 +186,18 @@ export default function Home() {
         </div>
 
         {selectedTab === "theyDontFollowBack" && (
-          <UserList users={notFollowBack} borderColor="#f43f5e" darkMode={darkMode} />
+          <UserList
+            users={notFollowBack}
+            borderColor="#f43f5e"
+            darkMode={darkMode}
+          />
         )}
         {selectedTab === "notFollowBack" && (
-          <UserList users={theyDontFollowBack} borderColor="#f59e0b" darkMode={darkMode} />
+          <UserList
+            users={theyDontFollowBack}
+            borderColor="#f59e0b"
+            darkMode={darkMode}
+          />
         )}
         {selectedTab === "mutual" && (
           <UserList users={mutuals} borderColor="#10b981" darkMode={darkMode} />
@@ -174,7 +228,16 @@ function TabButton({ label, active, onClick, darkMode }) {
 
 function UserList({ users, borderColor, darkMode }) {
   if (!users || users.length === 0) {
-    return <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", marginLeft: 10 }}>No users found</p>;
+    return (
+      <p
+        style={{
+          color: darkMode ? "#9ca3af" : "#6b7280",
+          marginLeft: 10,
+        }}
+      >
+        No users found
+      </p>
+    );
   }
 
   return (
@@ -205,7 +268,12 @@ function UserList({ users, borderColor, darkMode }) {
             />
             <div>
               <strong>{u.displayName || u.username}</strong> @{u.username}
-              <div style={{ fontSize: 13, color: darkMode ? "#d1d5db" : "#374151" }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: darkMode ? "#d1d5db" : "#374151",
+                }}
+              >
                 Followers: {u.followerCount} | Following: {u.followingCount}
               </div>
             </div>
