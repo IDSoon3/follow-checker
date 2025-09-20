@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function Home() {
@@ -11,35 +12,34 @@ export default function Home() {
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Mini App ready + auto login user
+  // Auto-load Farcaster user
   useEffect(() => {
     sdk.actions.ready();
 
-    async function fetchUser() {
+    const loadUser = async () => {
       try {
-        const res = await sdk.actions.signIn();
-        console.log("SignIn response:", res);
-
-        if (res?.user?.username) {
-          setUsername(res.user.username);
+        const userData = await sdk.context.getUser();
+        if (userData?.username) {
+          setUsername(userData.username);
+          fetchData(userData.username);
         }
       } catch (err) {
-        console.error("Farcaster login failed:", err);
+        console.error("Failed to load user from SDK", err);
       }
-    }
+    };
 
-    fetchUser();
+    loadUser();
   }, []);
 
-  const fetchData = async () => {
-    if (!username) return;
+  const fetchData = async (name = username) => {
+    if (!name) return;
     setLoading(true);
     setError("");
 
     try {
       const [followersRes, followingRes] = await Promise.all([
-        fetch(`/api/followers?username=${username}`),
-        fetch(`/api/following?username=${username}`),
+        fetch(`/api/followers?username=${name}`),
+        fetch(`/api/following?username=${name}`),
       ]);
 
       const followersData = await followersRes.json();
@@ -50,11 +50,13 @@ export default function Home() {
         setFollowing(followingData.users || []);
       } else {
         setError(
-          followersData.error || followingData.error || "Failed to fetch data"
+          followersData.error ||
+            followingData.error ||
+            "Failed to fetch data"
         );
       }
     } catch (err) {
-      setError("Server error occurred");
+      setError("Server error");
     }
 
     setLoading(false);
@@ -83,12 +85,12 @@ export default function Home() {
         <title>Farcaster Follow Checker</title>
         <meta
           name="description"
-          content="Check who doesn’t follow back or who is mutual on Farcaster"
+          content="Check who doesn’t follow you back or who is mutual on Farcaster"
         />
         <meta property="og:title" content="Farcaster Follow Checker" />
         <meta
           property="og:description"
-          content="Check who doesn’t follow back or who is mutual on Farcaster"
+          content="Check who doesn’t follow you back or who is mutual on Farcaster"
         />
         <meta property="og:image" content="/preview.png" />
         <meta name="fc:frame" content="vNext" />
@@ -149,7 +151,7 @@ export default function Home() {
             }}
           />
           <button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             style={{
               padding: "10px 16px",
               background: "#7c3aed",
@@ -202,7 +204,11 @@ export default function Home() {
           />
         )}
         {selectedTab === "mutual" && (
-          <UserList users={mutuals} borderColor="#10b981" darkMode={darkMode} />
+          <UserList
+            users={mutuals}
+            borderColor="#10b981"
+            darkMode={darkMode}
+          />
         )}
       </main>
     </div>
@@ -231,12 +237,7 @@ function TabButton({ label, active, onClick, darkMode }) {
 function UserList({ users, borderColor, darkMode }) {
   if (!users || users.length === 0) {
     return (
-      <p
-        style={{
-          color: darkMode ? "#9ca3af" : "#6b7280",
-          marginLeft: 10,
-        }}
-      >
+      <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", marginLeft: 10 }}>
         No users found
       </p>
     );
@@ -261,7 +262,7 @@ function UserList({ users, borderColor, darkMode }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center" }}>
-            <img
+            <Image
               src={u.pfp?.url || "/default-avatar.png"}
               alt={u.username}
               width={48}
