@@ -11,26 +11,25 @@ export default function Home() {
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Signal Mini App readiness and fetch user automatically
-useEffect(() => {
-  sdk.actions.ready();
+  // Mini App ready + auto login user
+  useEffect(() => {
+    sdk.actions.ready();
 
-  async function fetchUser() {
-    try {
-      const res = await sdk.actions.signIn();
-      console.log("SignIn response:", res);
+    async function fetchUser() {
+      try {
+        const res = await sdk.actions.signIn();
+        console.log("SignIn response:", res);
 
-      if (res?.user?.username) {
-        setUsername(res.user.username);
+        if (res?.user?.username) {
+          setUsername(res.user.username);
+        }
+      } catch (err) {
+        console.error("Farcaster login failed:", err);
       }
-    } catch (err) {
-      console.error("Farcaster login failed:", err);
     }
-  }
 
-  fetchUser();
-}, []);
-
+    fetchUser();
+  }, []);
 
   const fetchData = async () => {
     if (!username) return;
