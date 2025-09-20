@@ -1,8 +1,5 @@
-'use client';
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Head from "next/head";
-import { sdk } from "@farcaster/miniapp-sdk";
-import useFarcasterLogin from "../hooks/useFarcasterLogin";
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -12,20 +9,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
-
-  const { isReady, fid, userData } = useFarcasterLogin();
-
-  useEffect(() => {
-    if (isReady) {
-      sdk.actions.ready();
-    }
-  }, [isReady]);
-
-  useEffect(() => {
-    if (userData?.username) {
-      setUsername(userData.username);
-    }
-  }, [userData]);
 
   const fetchData = async () => {
     if (!username) return;
@@ -75,38 +58,15 @@ export default function Home() {
     >
       <Head>
         <title>Farcaster Follow Checker</title>
-        <meta
-          name="description"
-          content="Check who doesn't follow back or mutual followers on Farcaster"
-        />
+        <meta name="description" content="Check who unfollowed or mutuals on Farcaster" />
         <meta property="og:title" content="Farcaster Follow Checker" />
-        <meta
-          property="og:description"
-          content="Check who doesn't follow back or mutual followers on Farcaster"
-        />
+        <meta property="og:description" content="Check who unfollowed or mutuals on Farcaster" />
         <meta property="og:image" content="/preview.png" />
-        <meta name="fc:frame" content="vNext" />
-        <meta name="fc:frame:image" content="/preview.png" />
-        <meta name="fc:frame:button:1" content="Check Now" />
-        <meta name="fc:frame:post_url" content="/api/check" />
       </Head>
 
       <main style={{ maxWidth: 720, margin: "0 auto", padding: 20 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-          }}
-        >
-          <h1
-            style={{
-              fontSize: 28,
-              fontWeight: "bold",
-              color: "#7c3aed",
-            }}
-          >
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <h1 style={{ fontSize: 28, fontWeight: "bold", color: "#7c3aed" }}>
             Farcaster Follow Checker
           </h1>
           <button
@@ -118,8 +78,6 @@ export default function Home() {
               borderRadius: 8,
               border: "none",
               cursor: "pointer",
-              fontSize: 14,
-              fontWeight: "600",
             }}
           >
             {darkMode ? "☀️ Light" : "🌙 Dark"}
@@ -157,7 +115,7 @@ export default function Home() {
           </button>
         </div>
 
-        {loading && <p>Loading data...</p>}
+        {loading && <p>Loading...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
