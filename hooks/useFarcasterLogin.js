@@ -1,25 +1,27 @@
 import { useEffect, useState } from "react";
 import { sdk } from "@farcaster/miniapp-sdk";
 
-export default function useFarcasterLogin() {
-  const [fid, setFid] = useState(null);
-  const [username, setUsername] = useState("");
+export default function useFarcasterUser() {
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     async function init() {
       try {
-        await sdk.actions.ready();
-        const user = await sdk.wallet.getUser();
-        if (user) {
-          setFid(user.fid);
-          setUsername(user.username || "");
+        // Mark app as ready (fix splash screen stuck issue)
+        sdk.actions.ready();
+
+        // Get connected Farcaster user
+        const res = await sdk.actions.signIn();
+        if (res?.fid) {
+          setUser(res);
         }
-      } catch (e) {
-        console.warn("Farcaster login failed, fallback to manual input.");
+      } catch (err) {
+        console.error("Farcaster login error:", err);
       }
     }
+
     init();
   }, []);
 
-  return { fid, username, setUsername };
+  return user;
 }
