@@ -50,9 +50,7 @@ export default function Home() {
         setFollowing(followingData.users || []);
       } else {
         setError(
-          followersData.error ||
-            followingData.error ||
-            "Failed to fetch data"
+          followersData.error || followingData.error || "Failed to fetch data"
         );
       }
     } catch (err) {
@@ -92,9 +90,19 @@ export default function Home() {
           property="og:description"
           content="Check who doesn’t follow you back or who is mutual on Farcaster"
         />
-        <meta property="og:image" content="/preview.png" />
+        {/* FIXED: Full URL for preview image */}
+        <meta
+          property="og:image"
+          content="https://follow-checker.vercel.app/preview.png"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+
+        {/* Farcaster Frame */}
         <meta name="fc:frame" content="vNext" />
-        <meta name="fc:frame:image" content="/preview.png" />
+        <meta
+          name="fc:frame:image"
+          content="https://follow-checker.vercel.app/preview.png"
+        />
         <meta name="fc:frame:button:1" content="Check Now" />
         <meta name="fc:frame:post_url" content="/api/check" />
       </Head>
@@ -204,11 +212,7 @@ export default function Home() {
           />
         )}
         {selectedTab === "mutual" && (
-          <UserList
-            users={mutuals}
-            borderColor="#10b981"
-            darkMode={darkMode}
-          />
+          <UserList users={mutuals} borderColor="#10b981" darkMode={darkMode} />
         )}
       </main>
     </div>
