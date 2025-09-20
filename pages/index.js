@@ -1,9 +1,10 @@
-import { useState } from "react";
+'use client';
+import { useState, useEffect } from "react";
 import Head from "next/head";
-import useFarcasterUser from "../hooks/useFarcasterUser";
+import { sdk } from "@farcaster/miniapp-sdk";
+import useFarcasterLogin from "../hooks/useFarcasterLogin";
 
 export default function Home() {
-  const user = useFarcasterUser();
   const [username, setUsername] = useState("");
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
@@ -11,6 +12,20 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+
+  const { isReady, fid, userData } = useFarcasterLogin();
+
+  useEffect(() => {
+    if (isReady) {
+      sdk.actions.ready();
+    }
+  }, [isReady]);
+
+  useEffect(() => {
+    if (userData?.username) {
+      setUsername(userData.username);
+    }
+  }, [userData]);
 
   const fetchData = async () => {
     if (!username) return;
@@ -39,11 +54,6 @@ export default function Home() {
     setLoading(false);
   };
 
-  // Auto-fill username from Farcaster user
-  if (user && !username) {
-    setUsername(user.username);
-  }
-
   const notFollowBack = following.filter(
     (u) => !followers.some((f) => f.fid === u.fid)
   );
@@ -67,12 +77,12 @@ export default function Home() {
         <title>Farcaster Follow Checker</title>
         <meta
           name="description"
-          content="Check who follows you back, who doesn’t, and mutual connections on Farcaster"
+          content="Check who doesn't follow back or mutual followers on Farcaster"
         />
         <meta property="og:title" content="Farcaster Follow Checker" />
         <meta
           property="og:description"
-          content="Check who follows you back, who doesn’t, and mutual connections on Farcaster"
+          content="Check who doesn't follow back or mutual followers on Farcaster"
         />
         <meta property="og:image" content="/preview.png" />
         <meta name="fc:frame" content="vNext" />
@@ -119,7 +129,7 @@ export default function Home() {
         <div style={{ display: "flex", marginBottom: 20 }}>
           <input
             type="text"
-            placeholder="Enter Farcaster username"
+            placeholder="Enter username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={{
