@@ -1,8 +1,8 @@
 import { useState } from "react";
 import Head from "next/head";
+import useFarcasterLogin from "../hooks/useFarcasterLogin";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [selectedTab, setSelectedTab] = useState("theyDontFollowBack");
@@ -10,15 +10,17 @@ export default function Home() {
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  const fetchData = async () => {
-    if (!username) return;
+  const { username, setUsername } = useFarcasterLogin();
+
+  const fetchData = async (uname = username) => {
+    if (!uname) return;
     setLoading(true);
     setError("");
 
     try {
       const [followersRes, followingRes] = await Promise.all([
-        fetch(`/api/followers?username=${username}`),
-        fetch(`/api/following?username=${username}`),
+        fetch(`/api/followers?username=${uname}`),
+        fetch(`/api/following?username=${uname}`),
       ]);
 
       const followersData = await followersRes.json();
@@ -28,10 +30,10 @@ export default function Home() {
         setFollowers(followersData.users || []);
         setFollowing(followingData.users || []);
       } else {
-        setError(followersData.error || followingData.error || "Gagal mengambil data");
+        setError(followersData.error || followingData.error || "Failed to fetch data");
       }
-    } catch (err) {
-      setError("Terjadi kesalahan server");
+    } catch {
+      setError("Server error occurred");
     }
 
     setLoading(false);
@@ -60,17 +62,17 @@ export default function Home() {
         <title>Farcaster Follow Checker</title>
         <meta
           name="description"
-          content="Cek siapa yang tidak follow back atau siapa mutual di Farcaster"
+          content="Check who doesn’t follow back or who is mutual on Farcaster"
         />
         <meta property="og:title" content="Farcaster Follow Checker" />
         <meta
           property="og:description"
-          content="Cek siapa yang tidak follow back atau siapa mutual di Farcaster"
+          content="Check who doesn’t follow back or who is mutual on Farcaster"
         />
         <meta property="og:image" content="/preview.png" />
         <meta name="fc:frame" content="vNext" />
         <meta name="fc:frame:image" content="/preview.png" />
-        <meta name="fc:frame:button:1" content="Cek Sekarang" />
+        <meta name="fc:frame:button:1" content="Check Now" />
         <meta name="fc:frame:post_url" content="/api/check" />
       </Head>
 
@@ -112,7 +114,7 @@ export default function Home() {
         <div style={{ display: "flex", marginBottom: 20 }}>
           <input
             type="text"
-            placeholder="Masukkan username"
+            placeholder="Enter username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={{
@@ -126,7 +128,7 @@ export default function Home() {
             }}
           />
           <button
-            onClick={fetchData}
+            onClick={() => fetchData()}
             style={{
               padding: "10px 16px",
               background: "#7c3aed",
@@ -136,11 +138,11 @@ export default function Home() {
               cursor: "pointer",
             }}
           >
-            Cek
+            Check
           </button>
         </div>
 
-        {loading && <p>Sedang mengambil data...</p>}
+        {loading && <p>Loading...</p>}
         {error && <p style={{ color: "red" }}>{error}</p>}
 
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -199,7 +201,11 @@ function TabButton({ label, active, onClick, darkMode }) {
 
 function UserList({ users, borderColor, darkMode }) {
   if (!users || users.length === 0) {
-    return <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", marginLeft: 10 }}>No users found</p>;
+    return (
+      <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", marginLeft: 10 }}>
+        No users found
+      </p>
+    );
   }
 
   return (
@@ -230,7 +236,12 @@ function UserList({ users, borderColor, darkMode }) {
             />
             <div>
               <strong>{u.displayName || u.username}</strong> @{u.username}
-              <div style={{ fontSize: 13, color: darkMode ? "#d1d5db" : "#374151" }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  color: darkMode ? "#d1d5db" : "#374151",
+                }}
+              >
                 Followers: {u.followerCount} | Following: {u.followingCount}
               </div>
             </div>
