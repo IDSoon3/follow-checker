@@ -90,7 +90,6 @@ export default function Home() {
           property="og:description"
           content="Check who doesn’t follow you back or who is mutual on Farcaster"
         />
-        {/* FIXED: Full URL for preview image */}
         <meta
           property="og:image"
           content="https://follow-checker.vercel.app/preview.png"
@@ -231,6 +230,7 @@ function TabButton({ label, active, onClick, darkMode }) {
         borderRadius: 8,
         border: "1px solid #d1d5db",
         cursor: "pointer",
+        fontWeight: "500",
       }}
     >
       {label}
@@ -257,48 +257,54 @@ function UserList({ users, borderColor, darkMode }) {
             alignItems: "center",
             justifyContent: "space-between",
             marginBottom: 12,
-            border: `2px solid ${borderColor}`,
-            borderRadius: 10,
-            padding: 12,
-            background: darkMode ? "#1f2937" : "#f9fafb",
+            border: `1px solid ${borderColor}`,
+            borderRadius: 12,
+            padding: 14,
+            background: darkMode ? "#1f2937" : "#ffffff",
             color: darkMode ? "#f9fafb" : "#111827",
-            boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Image
-              src={u.pfp?.url || "/default-avatar.png"}
+              src={u.pfp_url || "/default-avatar.png"}
               alt={u.username}
               width={48}
               height={48}
-              style={{ borderRadius: "50%", marginRight: 12 }}
+              style={{ borderRadius: "50%" }}
             />
             <div>
-              <strong>{u.displayName || u.username}</strong> @{u.username}
+              <div style={{ fontWeight: "600" }}>
+                {u.display_name || u.username}{" "}
+                <span style={{ color: darkMode ? "#d1d5db" : "#6b7280" }}>
+                  @{u.username}
+                </span>
+              </div>
               <div
                 style={{
                   fontSize: 13,
                   color: darkMode ? "#d1d5db" : "#374151",
                 }}
               >
-                Followers: {u.followerCount} | Following: {u.followingCount}
+                Followers: {u.follower_count} | Following: {u.following_count}
               </div>
             </div>
           </div>
           <a
-            href={u.profileUrl}
+            href={`https://warpcast.com/${u.username}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              padding: "6px 10px",
-              background: "#2563eb",
+              padding: "6px 12px",
+              background: "#7c3aed",
               color: "#fff",
-              borderRadius: "6px",
+              borderRadius: "8px",
               fontSize: 13,
               textDecoration: "none",
+              fontWeight: 500,
             }}
           >
-            Visit Profile
+            Visit
           </a>
         </li>
       ))}
