@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import Image from "next/image";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(""); // default kosong → tidak auto "idsoon"
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [selectedTab, setSelectedTab] = useState("theyDontFollowBack");
@@ -12,22 +11,21 @@ export default function Home() {
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Load Farcaster user for debug only
+  // Auto-load Farcaster user (tidak langsung isi ke input kalau fallback)
   useEffect(() => {
     sdk.actions.ready();
 
     const loadUser = async () => {
       try {
         const userData = await sdk.context.getUser();
-        console.log("👉 Farcaster SDK userData:", userData);
-
-        // ⚠️ Jangan auto set ke kolom pencarian
-        // if (userData?.username) {
-        //   setUsername(userData.username);
-        //   fetchData(userData.username);
-        // }
+        if (userData?.username) {
+          setUsername(userData.username);
+          await fetchData(userData.username);
+        }
       } catch (err) {
-        console.error("❌ Failed to load user from SDK", err);
+        console.error("Failed to load user from SDK", err);
+        // fallback: jangan isi input, hanya fetch silent "idsoon" kalau mau
+        // await fetchData("idsoon"); → kalau ingin tetap ada data default
       }
     };
 
@@ -35,7 +33,11 @@ export default function Home() {
   }, []);
 
   const fetchData = async (name = username) => {
-    if (!name) return;
+    if (!name) {
+      setError("Please enter a username");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -53,13 +55,11 @@ export default function Home() {
         setFollowing(followingData.users || []);
       } else {
         setError(
-          followersData.error ||
-            followingData.error ||
-            "Failed to fetch data"
+          followersData.error || followingData.error || "Failed to fetch data"
         );
       }
     } catch (err) {
-      console.error("❌ Fetch error:", err);
+      console.error(err);
       setError("Server error");
     }
 
@@ -122,11 +122,14 @@ export default function Home() {
           }}
         >
           <h1
-            style={{ fontSize: 28, fontWeight: "bold", color: "#7c3aed" }}
+            style={{
+              fontSize: 28,
+              fontWeight: "bold",
+              color: "#7c3aed",
+            }}
           >
             Farcaster Follow Checker
           </h1>
-
           <button
             onClick={() => setDarkMode(!darkMode)}
             style={{
@@ -144,7 +147,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Search Input */}
         <div style={{ display: "flex", marginBottom: 20 }}>
           <input
             type="text"
@@ -215,11 +217,7 @@ export default function Home() {
           />
         )}
         {selectedTab === "mutual" && (
-          <UserList
-            users={mutuals}
-            borderColor="#10b981"
-            darkMode={darkMode}
-          />
+          <UserList users={mutuals} borderColor="#10b981" darkMode={darkMode} />
         )}
       </main>
     </div>
@@ -233,11 +231,7 @@ function TabButton({ label, active, onClick, darkMode }) {
       style={{
         flex: 1,
         padding: "10px",
-        background: active
-          ? "#7c3aed"
-          : darkMode
-          ? "#1f2937"
-          : "#f3f4f6",
+        background: active ? "#7c3aed" : darkMode ? "#1f2937" : "#f3f4f6",
         color: active ? "#fff" : darkMode ? "#f9fafb" : "#111827",
         borderRadius: 8,
         border: "1px solid #d1d5db",
@@ -253,12 +247,7 @@ function TabButton({ label, active, onClick, darkMode }) {
 function UserList({ users, borderColor, darkMode }) {
   if (!users || users.length === 0) {
     return (
-      <p
-        style={{
-          color: darkMode ? "#9ca3af" : "#6b7280",
-          marginLeft: 10,
-        }}
-      >
+      <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", marginLeft: 10 }}>
         No users found
       </p>
     );
@@ -266,70 +255,74 @@ function UserList({ users, borderColor, darkMode }) {
 
   return (
     <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
-      {users.map((u) => (
-        <li
-          key={u.fid}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-            border: `1px solid ${borderColor}`,
-            borderRadius: 12,
-            padding: 14,
-            background: darkMode ? "#1f2937" : "#ffffff",
-            color: darkMode ? "#f9fafb" : "#111827",
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Image
-              src={u.pfp_url || "/default-avatar.png"}
-              alt={u.username}
-              width={48}
-              height={48}
-              style={{ borderRadius: "50%" }}
-            />
-            <div>
-              <div style={{ fontWeight: "600" }}>
-                {u.display_name || u.username}{" "}
-                <span
-                  style={{
-                    color: darkMode ? "#d1d5db" : "#6b7280",
-                  }}
-                >
-                  @{u.username}
-                </span>
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  color: darkMode ? "#d1d5db" : "#374151",
-                }}
-              >
-                Followers: {u.follower_count} | Following:{" "}
-                {u.following_count}
-              </div>
-            </div>
-          </div>
-          <a
-            href={`https://warpcast.com/${u.username}`}
-            target="_blank"
-            rel="noopener noreferrer"
+      {users.map((u) => {
+        // fallback avatar
+        const avatar =
+          u.pfp?.url || u.pfp_url || u.profile_image || "/default-avatar.png";
+
+        return (
+          <li
+            key={u.fid}
             style={{
-              padding: "6px 12px",
-              background: "#7c3aed",
-              color: "#fff",
-              borderRadius: "8px",
-              fontSize: 13,
-              textDecoration: "none",
-              fontWeight: 500,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+              border: `1px solid ${borderColor}`,
+              borderRadius: 12,
+              padding: 14,
+              background: darkMode ? "#1f2937" : "#ffffff",
+              color: darkMode ? "#f9fafb" : "#111827",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
             }}
           >
-            Visit
-          </a>
-        </li>
-      ))}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img
+                src={avatar}
+                alt={u.username}
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                }}
+              />
+              <div>
+                <div style={{ fontWeight: "600" }}>
+                  {u.display_name || u.username}{" "}
+                  <span style={{ color: darkMode ? "#d1d5db" : "#6b7280" }}>
+                    @{u.username}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    fontSize: 13,
+                    color: darkMode ? "#d1d5db" : "#374151",
+                  }}
+                >
+                  Followers: {u.follower_count} | Following: {u.following_count}
+                </div>
+              </div>
+            </div>
+            <a
+              href={`https://warpcast.com/${u.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: "6px 12px",
+                background: "#7c3aed",
+                color: "#fff",
+                borderRadius: "8px",
+                fontSize: 13,
+                textDecoration: "none",
+                fontWeight: 500,
+              }}
+            >
+              Visit
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 }
