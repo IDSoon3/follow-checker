@@ -1,7 +1,32 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import Image from "next/image";
 import { sdk } from "@farcaster/miniapp-sdk";
+
+// 🔹 Splash Screen
+function SplashScreen() {
+  return (
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        background: "#7c3aed",
+        color: "white",
+      }}
+    >
+      <img
+        src="/preview.png"
+        alt="App Logo"
+        width={100}
+        height={100}
+        style={{ borderRadius: 16 }}
+      />
+      <h2 style={{ marginTop: 20 }}>Farcaster Follow Checker</h2>
+    </div>
+  );
+}
 
 export default function Home() {
   const [username, setUsername] = useState("");
@@ -11,6 +36,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Auto-load Farcaster user
   useEffect(() => {
@@ -25,6 +51,8 @@ export default function Home() {
         }
       } catch (err) {
         console.error("Failed to load user from SDK", err);
+      } finally {
+        setInitialized(true);
       }
     };
 
@@ -70,6 +98,11 @@ export default function Home() {
     following.some((f) => f.fid === u.fid)
   );
 
+  // 🔹 Show Splash Screen before initialized
+  if (!initialized) {
+    return <SplashScreen />;
+  }
+
   return (
     <div
       style={{
@@ -90,18 +123,12 @@ export default function Home() {
           property="og:description"
           content="Check who doesn’t follow you back or who is mutual on Farcaster"
         />
-        <meta
-          property="og:image"
-          content="https://follow-checker.vercel.app/preview.png"
-        />
+        <meta property="og:image" content="/preview.png" />
         <meta name="twitter:card" content="summary_large_image" />
 
         {/* Farcaster Frame */}
         <meta name="fc:frame" content="vNext" />
-        <meta
-          name="fc:frame:image"
-          content="https://follow-checker.vercel.app/preview.png"
-        />
+        <meta name="fc:frame:image" content="/preview.png" />
         <meta name="fc:frame:button:1" content="Check Now" />
         <meta name="fc:frame:post_url" content="/api/check" />
       </Head>
@@ -218,6 +245,7 @@ export default function Home() {
   );
 }
 
+// 🔹 Tab Button
 function TabButton({ label, active, onClick, darkMode }) {
   return (
     <button
@@ -238,6 +266,7 @@ function TabButton({ label, active, onClick, darkMode }) {
   );
 }
 
+// 🔹 User List
 function UserList({ users, borderColor, darkMode }) {
   if (!users || users.length === 0) {
     return (
@@ -266,12 +295,15 @@ function UserList({ users, borderColor, darkMode }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Image
-              src={u.pfp_url || "/default-avatar.png"}
+            <img
+              src={u.pfp?.url || u.pfp_url || "/default-avatar.png"}
               alt={u.username}
-              width={48}
-              height={48}
-              style={{ borderRadius: "50%" }}
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                objectFit: "cover",
+              }}
             />
             <div>
               <div style={{ fontWeight: "600" }}>
