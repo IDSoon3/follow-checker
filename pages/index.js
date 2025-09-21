@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 export default function Home() {
@@ -7,7 +8,7 @@ export default function Home() {
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
   const [selectedTab, setSelectedTab] = useState("theyDontFollowBack");
-  const [loading, setLoading] = useState(true); // mulai dengan true → splash screen muncul
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
@@ -20,17 +21,10 @@ export default function Home() {
         const userData = await sdk.context.getUser();
         if (userData?.username) {
           setUsername(userData.username);
-          await fetchData(userData.username);
-        } else {
-          // fallback kalau SDK tidak kasih user
-          setUsername("idsoon");
-          await fetchData("idsoon");
+          fetchData(userData.username);
         }
       } catch (err) {
         console.error("Failed to load user from SDK", err);
-        // fallback biar tidak stuck
-        setUsername("idsoon");
-        await fetchData("idsoon");
       }
     };
 
@@ -38,10 +32,8 @@ export default function Home() {
   }, []);
 
   const fetchData = async (name = username) => {
-    if (!name) {
-      setLoading(false);
-      return;
-    }
+    if (!name) return;
+    setLoading(true);
     setError("");
 
     try {
@@ -62,7 +54,6 @@ export default function Home() {
         );
       }
     } catch (err) {
-      console.error(err);
       setError("Server error");
     }
 
@@ -78,11 +69,6 @@ export default function Home() {
   const mutuals = followers.filter((u) =>
     following.some((f) => f.fid === u.fid)
   );
-
-  // Splash screen kalau masih loading dan data belum ada
-  if (loading && followers.length === 0 && following.length === 0) {
-    return <SplashScreen />;
-  }
 
   return (
     <div
@@ -109,7 +95,6 @@ export default function Home() {
           content="https://follow-checker.vercel.app/preview.png"
         />
         <meta name="twitter:card" content="summary_large_image" />
-
         {/* Farcaster Frame */}
         <meta name="fc:frame" content="vNext" />
         <meta
@@ -232,31 +217,6 @@ export default function Home() {
   );
 }
 
-function SplashScreen() {
-  return (
-    <div
-      style={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        background: "#7c3aed",
-        color: "white",
-      }}
-    >
-      <img
-        src="/preview.png"
-        alt="App Logo"
-        width={100}
-        height={100}
-        style={{ borderRadius: 16 }}
-      />
-      <h2 style={{ marginTop: 20 }}>Farcaster Follow Checker</h2>
-    </div>
-  );
-}
-
 function TabButton({ label, active, onClick, darkMode }) {
   return (
     <button
@@ -286,6 +246,14 @@ function UserList({ users, borderColor, darkMode }) {
     );
   }
 
+  const handleVisit = (username) => {
+    if (sdk?.actions?.openUrl) {
+      sdk.actions.openUrl(`https://warpcast.com/${username}`);
+    } else {
+      window.open(`https://warpcast.com/${username}`, "_blank");
+    }
+  };
+
   return (
     <ul style={{ listStyle: "none", padding: 0, marginTop: 10 }}>
       {users.map((u) => (
@@ -305,12 +273,12 @@ function UserList({ users, borderColor, darkMode }) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <img
+            <Image
               src={u.pfp?.url || u.pfp_url || "/default-avatar.png"}
               alt={u.username}
+              width={48}
+              height={48}
               style={{
-                width: 48,
-                height: 48,
                 borderRadius: "50%",
                 objectFit: "cover",
               }}
@@ -332,22 +300,21 @@ function UserList({ users, borderColor, darkMode }) {
               </div>
             </div>
           </div>
-          <a
-            href={`https://warpcast.com/${u.username}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => handleVisit(u.username)}
             style={{
               padding: "6px 12px",
               background: "#7c3aed",
               color: "#fff",
               borderRadius: "8px",
               fontSize: 13,
-              textDecoration: "none",
               fontWeight: 500,
+              cursor: "pointer",
+              border: "none",
             }}
           >
             Visit
-          </a>
+          </button>
         </li>
       ))}
     </ul>
